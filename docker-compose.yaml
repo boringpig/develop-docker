@@ -1,0 +1,100 @@
+version: "3.7"
+
+services:
+  shipping_app:
+    build:
+      context: ./workspace
+      args:
+        APP_NAME: "shipping_app"
+    image: workspace_shipping_app:8.0
+    container_name: prototype-shipping
+    restart: unless-stopped
+    volumes:
+      - ${SHIPPING_APP_PATH}:/var/www/html/shipping_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+    depends_on:
+      - mysql
+      - redis
+
+  dms_app:
+    build:
+      context: ./workspace
+      args:
+        APP_NAME: "dms_app"
+    image: workspace_dms_app:8.0
+    container_name: prototype-dms
+    restart: unless-stopped
+    volumes:
+      - ${DMS_APP_PATH}:/var/www/html/dms_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+    depends_on:
+      - mysql
+      - redis
+
+  shipping_worker:
+    build:
+      context: ./workspace
+      args:
+        APP_NAME: "shipping_app"
+    image: workspace_shipping_worker:8.0
+    container_name: prototype-shipping-worker
+    restart: unless-stopped
+    user: root
+    command: [ "supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
+    volumes:
+      - ${SHIPPING_APP_PATH}:/var/www/html/shipping_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+      - ./supervisor:/etc/supervisor/conf.d
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:1.19.6
+    container_name: prototype-nginx
+    restart: unless-stopped
+    ports:
+      - 81:81
+      - 82:82
+    volumes:
+      - ${SHIPPING_APP_PATH}/public:/var/www/html/shipping_app/public
+      - ${DMS_APP_PATH}/public:/var/www/html/dms_app/public
+      - ./nginx:/etc/nginx/templates
+    environment:
+      - NGINX_UPSTREAM_SHIPPING_APP=shipping_app:9000
+      - NGINX_UPSTREAM_DMS_APP=dms_app:9000
+    depends_on:
+      - shipping_app
+      - dms_app
+
+  mysql:
+    image: mysql:8.0.23
+    container_name: prototype-mysql
+    restart: unless-stopped
+    ports:
+      - 33060:3306
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./mysql/my-8.0.cnf:/etc/mysql/conf.d/my.cnf
+    cap_add:
+      - SYS_NICE # fix issue of mysql 8, see https://github.com/docker-library/mysql/issues/422
+
+  redis:
+    image: redis:6.0.10
+    container_name: prototype-redis
+    restart: unless-stopped
+    ports:
+      - 6400:6379
+    volumes:
+      - 'redis:/data'
+
+volumes:
+  mysql:
+    driver: local
+  redis:
+    driver: local
