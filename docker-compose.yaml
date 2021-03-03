@@ -31,6 +31,21 @@ services:
       - mysql
       - redis
 
+  wms_app:
+    build:
+      context: ./workspace
+      args:
+        APP_NAME: "wms_app"
+    image: workspace_wms_app:8.0
+    container_name: prototype-wms
+    restart: unless-stopped
+    volumes:
+      - ${WMS_APP_PATH}:/var/www/html/wms_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+    depends_on:
+      - mysql
+      - redis
+
   shipping_worker:
     build:
       context: ./workspace
@@ -56,13 +71,16 @@ services:
     ports:
       - 81:81
       - 82:82
+      - 83:83
     volumes:
       - ${SHIPPING_APP_PATH}/public:/var/www/html/shipping_app/public
       - ${DMS_APP_PATH}/public:/var/www/html/dms_app/public
+      - ${WMS_APP_PATH}/public:/var/www/html/wms_app/public
       - ./nginx:/etc/nginx/templates
     environment:
       - NGINX_UPSTREAM_SHIPPING_APP=shipping_app:9000
       - NGINX_UPSTREAM_DMS_APP=dms_app:9000
+      - NGINX_UPSTREAM_WMS_APP=wms_app:9000
     depends_on:
       - shipping_app
       - dms_app
