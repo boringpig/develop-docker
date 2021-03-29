@@ -14,7 +14,10 @@ RUN apt-get update && apt-get install -qy \
   curl \
   fonts-noto \
   fonts-noto-cjk \
-  supervisor
+  supervisor \
+  imagemagick \
+  vim \
+  sudo
 
 # Install PHP Extensions
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
@@ -29,7 +32,8 @@ RUN install-php-extensions \
   pdo_mysql \
   xmlrpc \
   redis \
-  zip
+  zip \
+  imagick
 
 # Add user & group
 RUN groupadd -g 1000 app && \
