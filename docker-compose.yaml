@@ -48,7 +48,7 @@ services:
 
   customized_app:
     build:
-      context: ./workspace
+      context: ./workspace/customized
       args:
         APP_NAME: "customized_app"
     image: workspace_customized_app:8.0
@@ -74,7 +74,25 @@ services:
     volumes:
       - ${SHIPPING_APP_PATH}:/var/www/html/shipping_app
       - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-      - ./supervisor:/etc/supervisor/conf.d
+      - ./supervisor/shipping:/etc/supervisor/conf.d
+    depends_on:
+      - mysql
+      - redis
+
+  customized_worker:
+    build:
+      context: ./workspace/customized
+      args:
+        APP_NAME: "customized_app"
+    image: workspace_customized_worker:8.0
+    container_name: prototype-customized-worker
+    restart: unless-stopped
+    user: root
+    command: [ "supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
+    volumes:
+      - ${CUSTOMIZED_APP_PATH}:/var/www/html/customized_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+      - ./supervisor/customized:/etc/supervisor/conf.d
     depends_on:
       - mysql
       - redis
@@ -110,7 +128,7 @@ services:
     container_name: prototype-mysql
     restart: unless-stopped
     ports:
-      - 3306:3306
+      - 33060:3306
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
