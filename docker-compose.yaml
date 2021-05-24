@@ -61,6 +61,21 @@ services:
       - mysql
       - redis
 
+  nxs_app:
+    build:
+      context: ./workspace
+      args:
+        APP_NAME: "nxs_app"
+    image: workspace_nxs_app:8.0
+    container_name: prototype-nxs
+    restart: unless-stopped
+    volumes:
+      - ${NXS_APP_PATH}:/var/www/html/nxs_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+    depends_on:
+      - mysql
+      - redis
+
   shipping_worker:
     build:
       context: ./workspace
@@ -106,29 +121,33 @@ services:
       - 82:82
       - 83:83
       - 84:84
+      - 85:85
     volumes:
       - ${SHIPPING_APP_PATH}/public:/var/www/html/shipping_app/public
       - ${DMS_APP_PATH}/public:/var/www/html/dms_app/public
       - ${WMS_APP_PATH}/public:/var/www/html/wms_app/public
       - ${CUSTOMIZED_APP_PATH}/public:/var/www/html/customized_app/public
+      - ${NXS_APP_PATH}/public:/var/www/html/nxs_app/public
       - ./nginx:/etc/nginx/templates
     environment:
       - NGINX_UPSTREAM_SHIPPING_APP=shipping_app:9000
       - NGINX_UPSTREAM_DMS_APP=dms_app:9000
       - NGINX_UPSTREAM_WMS_APP=wms_app:9000
       - NGINX_UPSTREAM_CUSTOMIZED_APP=customized_app:9000
+      - NGINX_UPSTREAM_NXS_APP=nxs_app:9000
     depends_on:
       - shipping_app
       - dms_app
       - wms_app
       - customized_app
+      - nxs_app
 
   mysql:
     image: mysql:8.0.23
     container_name: prototype-mysql
     restart: unless-stopped
     ports:
-      - 33060:3306
+      - 33061:3306
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -145,7 +164,7 @@ services:
     container_name: prototype-redis
     restart: unless-stopped
     ports:
-      - 6400:6379
+      - 6401:6379
     volumes:
       - 'redis:/data'
 
