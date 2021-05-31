@@ -16,21 +16,6 @@ services:
       - mysql
       - redis
 
-  dms_app:
-    build:
-      context: ./workspace
-      args:
-        APP_NAME: "dms_app"
-    image: workspace_dms_app:8.0
-    container_name: prototype-dms
-    restart: unless-stopped
-    volumes:
-      - ${DMS_APP_PATH}:/var/www/html/dms_app
-      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-    depends_on:
-      - mysql
-      - redis
-
   wms_app:
     build:
       context: ./workspace
@@ -112,6 +97,24 @@ services:
       - mysql
       - redis
 
+  nxs_worker:
+    build:
+      context: ./workspace
+      args:
+        APP_NAME: "nxs_app"
+    image: workspace_nxs_worker:8.0
+    container_name: prototype-nxs-worker
+    restart: unless-stopped
+    user: root
+    command: [ "supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
+    volumes:
+      - ${NXS_APP_PATH}:/var/www/html/nxs_app
+      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+      - ./supervisor/nxs:/etc/supervisor/conf.d
+    depends_on:
+      - mysql
+      - redis
+
   nginx:
     image: nginx:1.19.6
     container_name: prototype-nginx
@@ -121,23 +124,19 @@ services:
       - 82:82
       - 83:83
       - 84:84
-      - 85:85
     volumes:
       - ${SHIPPING_APP_PATH}/public:/var/www/html/shipping_app/public
-      - ${DMS_APP_PATH}/public:/var/www/html/dms_app/public
       - ${WMS_APP_PATH}/public:/var/www/html/wms_app/public
       - ${CUSTOMIZED_APP_PATH}/public:/var/www/html/customized_app/public
       - ${NXS_APP_PATH}/public:/var/www/html/nxs_app/public
       - ./nginx:/etc/nginx/templates
     environment:
       - NGINX_UPSTREAM_SHIPPING_APP=shipping_app:9000
-      - NGINX_UPSTREAM_DMS_APP=dms_app:9000
       - NGINX_UPSTREAM_WMS_APP=wms_app:9000
       - NGINX_UPSTREAM_CUSTOMIZED_APP=customized_app:9000
       - NGINX_UPSTREAM_NXS_APP=nxs_app:9000
     depends_on:
       - shipping_app
-      - dms_app
       - wms_app
       - customized_app
       - nxs_app
