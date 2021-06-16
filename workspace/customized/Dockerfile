@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -qy \
   supervisor \
   vim
 
+RUN apt install -qy wkhtmltopdf
 RUN apt install -qy texlive-latex-extra
 
 # Install PHP Extensions
