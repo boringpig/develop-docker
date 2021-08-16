@@ -1,41 +1,11 @@
-version: "3.7"
+version: '3.7'
 
 services:
-  shipping_app:
-    build:
-      context: ./workspace
-      args:
-        APP_NAME: "shipping_app"
-    image: workspace_shipping_app:8.0
-    container_name: prototype-shipping
-    restart: unless-stopped
-    volumes:
-      - ${SHIPPING_APP_PATH}:/var/www/html/shipping_app
-      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-    depends_on:
-      - mysql
-      - redis
-
-  wms_app:
-    build:
-      context: ./workspace
-      args:
-        APP_NAME: "wms_app"
-    image: workspace_wms_app:8.0
-    container_name: prototype-wms
-    restart: unless-stopped
-    volumes:
-      - ${WMS_APP_PATH}:/var/www/html/wms_app
-      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-    depends_on:
-      - mysql
-      - redis
-
   customized_app:
     build:
       context: ./workspace/customized
       args:
-        APP_NAME: "customized_app"
+        APP_NAME: 'customized_app'
     image: workspace_customized_app:8.0
     container_name: prototype-customized
     restart: unless-stopped
@@ -46,35 +16,17 @@ services:
       - mysql
       - redis
 
-  nxs_app:
+  design_app:
     build:
       context: ./workspace
       args:
-        APP_NAME: "nxs_app"
-    image: workspace_nxs_app:8.0
-    container_name: prototype-nxs
+        APP_NAME: 'design_app'
+    image: workspace_design_app:8.0
+    container_name: prototype-design
     restart: unless-stopped
     volumes:
-      - ${NXS_APP_PATH}:/var/www/html/nxs_app
+      - ${DESIGN_APP_PATH}:/var/www/html/design_app
       - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-    depends_on:
-      - mysql
-      - redis
-
-  shipping_worker:
-    build:
-      context: ./workspace
-      args:
-        APP_NAME: "shipping_app"
-    image: workspace_shipping_worker:8.0
-    container_name: prototype-shipping-worker
-    restart: unless-stopped
-    user: root
-    command: [ "supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
-    volumes:
-      - ${SHIPPING_APP_PATH}:/var/www/html/shipping_app
-      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-      - ./supervisor/shipping:/etc/supervisor/conf.d
     depends_on:
       - mysql
       - redis
@@ -83,34 +35,16 @@ services:
     build:
       context: ./workspace/customized
       args:
-        APP_NAME: "customized_app"
+        APP_NAME: 'customized_app'
     image: workspace_customized_worker:8.0
     container_name: prototype-customized-worker
     restart: unless-stopped
     user: root
-    command: [ "supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
+    command: ['supervisord', '-n', '-c', '/etc/supervisor/supervisord.conf']
     volumes:
       - ${CUSTOMIZED_APP_PATH}:/var/www/html/customized_app
       - ./php/php.ini:/etc/php/8.0/fpm/php.ini
       - ./supervisor/customized:/etc/supervisor/conf.d
-    depends_on:
-      - mysql
-      - redis
-
-  nxs_worker:
-    build:
-      context: ./workspace
-      args:
-        APP_NAME: "nxs_app"
-    image: workspace_nxs_worker:8.0
-    container_name: prototype-nxs-worker
-    restart: unless-stopped
-    user: root
-    command: [ "supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf" ]
-    volumes:
-      - ${NXS_APP_PATH}:/var/www/html/nxs_app
-      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
-      - ./supervisor/nxs:/etc/supervisor/conf.d
     depends_on:
       - mysql
       - redis
@@ -120,26 +54,18 @@ services:
     container_name: prototype-nginx
     restart: unless-stopped
     ports:
-      - 81:81
-      - 82:82
       - 83:83
       - 84:84
     volumes:
-      - ${SHIPPING_APP_PATH}/public:/var/www/html/shipping_app/public
-      - ${WMS_APP_PATH}/public:/var/www/html/wms_app/public
       - ${CUSTOMIZED_APP_PATH}/public:/var/www/html/customized_app/public
-      - ${NXS_APP_PATH}/public:/var/www/html/nxs_app/public
+      - ${DESIGN_APP_PATH}/public:/var/www/html/design_app/public
       - ./nginx:/etc/nginx/templates
     environment:
-      - NGINX_UPSTREAM_SHIPPING_APP=shipping_app:9000
-      - NGINX_UPSTREAM_WMS_APP=wms_app:9000
       - NGINX_UPSTREAM_CUSTOMIZED_APP=customized_app:9000
-      - NGINX_UPSTREAM_NXS_APP=nxs_app:9000
+      - NGINX_UPSTREAM_DESIGN_APP=design_app:9000
     depends_on:
-      - shipping_app
-      - wms_app
       - customized_app
-      - nxs_app
+      - design_app
 
   mysql:
     image: mysql:8.0.23
