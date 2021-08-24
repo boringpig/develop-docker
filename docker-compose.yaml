@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
     volumes:
       - ${DESIGN_APP_PATH}:/var/www/html/design_app
-      - ./php/php.ini:/etc/php/8.0/fpm/php.ini
+      - ./php/php.ini:/usr/local/etc/php/conf.d/php.ini
     depends_on:
       - mysql
       - redis
